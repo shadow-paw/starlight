@@ -1,9 +1,11 @@
 import * as THREE from "three";
+import * as Stats from "stats.js";
 import { IStage } from "./stage/istage";
 import { MainStage } from "./stage/main";
 
 export class Application {
     private run: boolean;
+    private stats: Stats;
     private animateTimer: number | undefined;
     private renderer: THREE.WebGLRenderer;
     private stage: IStage | null;
@@ -15,6 +17,10 @@ export class Application {
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(this.renderer.domElement);
         window.addEventListener('resize', () => this.on_resize(), false);
+
+        this.stats = new Stats();
+        this.stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
+        document.body.appendChild(this.stats.dom);
     }
     start() {
         this.stage = new MainStage();
@@ -35,8 +41,10 @@ export class Application {
     }
     private animate(t: DOMHighResTimeStamp) {
         if (!this.run) return;
-        this.animateTimer = requestAnimationFrame((x) => this.animate(x));
+        this.stats.begin();
         this.on_animate(t);
+        this.stats.end();
+        this.animateTimer = requestAnimationFrame((x) => this.animate(x));
     }
     private on_resize() {
         this.renderer.setSize(window.innerWidth, window.innerHeight);
