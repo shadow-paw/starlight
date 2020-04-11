@@ -10,6 +10,7 @@ export class Application {
     private renderer: THREE.WebGLRenderer;
     private lastT: DOMHighResTimeStamp;
     private stage: IStage | null;
+    private isMouseMoved: boolean;
 
     constructor() {
         this.lastT = 0;
@@ -17,10 +18,28 @@ export class Application {
         this.run = false;
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.oncontextmenu = () => false;
         document.body.appendChild(this.renderer.domElement);
         window.addEventListener('resize', () => this.on_resize(), false);
 
-        this.renderer.domElement.addEventListener('click', () => console.log("click"));
+        this.isMouseMoved = false;
+        this.renderer.domElement.addEventListener('mousedown', (ev) => {
+            ev.preventDefault();
+            this.isMouseMoved = false;
+            if (this.stage) this.stage.onMouseDown(ev);
+        });
+        this.renderer.domElement.addEventListener('mouseup', (ev) => {
+            ev.preventDefault();
+            if (this.stage) {
+                this.stage.onMouseUp(ev);
+                if (!this.isMouseMoved) this.stage.onMouseClick(ev);
+            }
+        });
+        this.renderer.domElement.addEventListener('mousemove', (ev) => {
+            ev.preventDefault();
+            this.isMouseMoved = true;
+            if (this.stage) this.stage.onMouseMove(ev);
+        });
 
         this.stats = new Stats();
         this.stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom

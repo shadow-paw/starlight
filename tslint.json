@@ -12,7 +12,8 @@
         "no-console": {
             "severity": "warning",
             "options": ["debug", "info", "log", "time", "timeEnd", "trace"]
-        }
+        },
+        "no-empty": false
     },
     "jsRules": {
         "max-line-length": {

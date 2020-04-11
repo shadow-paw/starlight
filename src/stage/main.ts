@@ -26,4 +26,16 @@ export class MainStage implements IStage {
         if (!this.scene) return;
         this.scene.animate(renderer, dt);
     }
+    onMouseUp(ev: MouseEvent): void {
+        if (this.scene) this.scene.onMouseUp(ev);
+    }
+    onMouseDown(ev: MouseEvent): void {
+        if (this.scene) this.scene.onMouseDown(ev);
+    }
+    onMouseMove(ev: MouseEvent): void {
+        if (this.scene) this.scene.onMouseMove(ev);
+    }
+    onMouseClick(ev: MouseEvent): void {
+        if (this.scene) this.scene.onMouseClick(ev);
+    }
 }

@@ -19,8 +19,10 @@ export class UniverseScene implements IScene {
     private universe: Universe | null;
     private gui: DAT.GUI;
     private options: UniverseOptions;
+    private paused: boolean;
 
     constructor() {
+        this.paused = false;
         this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 4000);
         this.camera.position.set(-100, -100, 1200);
         this.scene = null;
@@ -58,6 +60,7 @@ export class UniverseScene implements IScene {
                 .onFinishChange(() => this.onOptionsUpdated());
     }
     enter(): void {
+        this.paused = false;
         this.scene = new THREE.Scene();
         this.geometry = new THREE.SphereGeometry(1.0);
         this.material = new THREE.MeshNormalMaterial();
@@ -82,7 +85,32 @@ export class UniverseScene implements IScene {
     }
     animate(renderer: THREE.WebGLRenderer, dt: number): void {
         this.tick(dt);
-        renderer.render(this.scene, this.camera);
+        if (this.scene) {
+            renderer.render(this.scene, this.camera);
+        }
+    }
+    onMouseUp(ev: MouseEvent): void {
+    }
+    onMouseDown(ev: MouseEvent): void {
+    }
+    onMouseMove(ev: MouseEvent): void {
+        if (ev.buttons === 1) {
+            if (ev.shiftKey) {
+                const dir = this.camera.position.clone()
+                                                .normalize()
+                                                .multiplyScalar(ev.movementY > 0 ? 10 : -10);
+                this.camera.position.add(dir);
+            } else {
+                this.camera.rotateY(ev.movementX * -0.01);
+                this.camera.rotateX(ev.movementY * -0.01);
+            }
+        } else if (ev.buttons === 2) {
+            this.camera.position.x -= ev.movementX;
+            this.camera.position.y -= ev.movementY;
+        }
+    }
+    onMouseClick(ev: MouseEvent): void {
+        this.paused = !this.paused;
     }
     private onOptionsUpdated(): void {
         // remove previous mesh
@@ -100,9 +128,13 @@ export class UniverseScene implements IScene {
             this.meshes[i] = mesh;
             this.scene.add(mesh);
         }
+        // reset camera
+        this.camera.position.set(-100, -100, 1200);
+        this.camera.rotation.set(0, 0, 0);
     }
     private tick(dt: number): void {
         if (!this.universe) return;
+        if (this.paused) return;
         this.universe.tick(dt);
         const planets = this.universe.getPlanets();
         for (let i=0; i<planets.length; i++) {
