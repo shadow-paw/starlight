@@ -116,15 +116,13 @@ export class UniverseScene implements IScene {
         // remove previous mesh
         this.meshes.forEach(mesh => this.scene.remove(mesh));
         // re-create world
-        this.universe.G = this.options.gravity * 0.001;
+        this.universe.G = this.options.gravity * 0.002;
         this.universe.randomize(this.options.numPlanets, this.options.maxR, this.options.maxVelocity / 1000);
         const planets = this.universe.getPlanets();
         this.meshes = new Array<THREE.Mesh>(planets.length);
         for (let i=0; i<planets.length; i++) {
             const mesh = new THREE.Mesh(this.geometry, this.material);
-            mesh.position.x = planets[i].position.x;
-            mesh.position.y = planets[i].position.y;
-            mesh.position.z = planets[i].position.z;
+            mesh.position.copy(planets[i].position);
             this.meshes[i] = mesh;
             this.scene.add(mesh);
         }
@@ -138,9 +136,7 @@ export class UniverseScene implements IScene {
         this.universe.tick(dt);
         const planets = this.universe.getPlanets();
         for (let i=0; i<planets.length; i++) {
-            this.meshes[i].position.x = planets[i].position.x;
-            this.meshes[i].position.y = planets[i].position.y;
-            this.meshes[i].position.z = planets[i].position.z;
+            this.meshes[i].position.copy(planets[i].position);
         }
     }
 }

@@ -11,31 +11,30 @@ export class MainStage implements IStage {
     }
     enter(): void {
         this.scene = new UniverseScene();
-        this.scene.enter();
+        this.scene?.enter();
     }
     leave(): void {
         if (this.scene) {
-            this.scene.leave();
+            this.scene?.leave();
             this.scene = null;
         }
     }
     resize(width: number, height: number): void {
-        this.scene.resize(width, height);
+        this.scene?.resize(width, height);
     }
     animate(renderer: THREE.WebGLRenderer, dt: number): void {
-        if (!this.scene) return;
-        this.scene.animate(renderer, dt);
+        this.scene?.animate(renderer, dt);
     }
     onMouseUp(ev: MouseEvent): void {
-        if (this.scene) this.scene.onMouseUp(ev);
+        this.scene?.onMouseUp(ev);
     }
     onMouseDown(ev: MouseEvent): void {
-        if (this.scene) this.scene.onMouseDown(ev);
+        this.scene?.onMouseDown(ev);
     }
     onMouseMove(ev: MouseEvent): void {
-        if (this.scene) this.scene.onMouseMove(ev);
+        this.scene?.onMouseMove(ev);
     }
     onMouseClick(ev: MouseEvent): void {
-        if (this.scene) this.scene.onMouseClick(ev);
+        this.scene?.onMouseClick(ev);
     }
 }

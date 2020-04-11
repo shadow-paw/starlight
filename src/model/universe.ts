@@ -26,18 +26,18 @@ export class Universe {
         this.planets[0] = new Array<Planet>(numPlanets);
         this.planets[1] = new Array<Planet>(numPlanets);
         this.active = 0;
-        for (let i = 0; i < numPlanets; i++) {
+        for (let i=0; i<numPlanets; i++) {
             this.planets[0][i] = {
-                mass: Math.random() * 0.999 + 0.001,
+                mass: Math.random() * 0.899 + 0.101,
                 radius: Math.random() * 0.9 + 0.1,
                 position: this.randomVector(maxR * Math.random()),
                 velocity: this.randomVector(maxVelocity * Math.random()),
             }
         }
-        for (let i = 0; i < numPlanets; i++) {
+        for (let i=0; i<numPlanets; i++) {
             this.planets[1][i] = {
-                mass: 0,
-                radius: 0,
+                mass: this.planets[0][i].mass,
+                radius: this.planets[0][i].radius,
                 position: new Vector3(),
                 velocity: new Vector3(),
             }
@@ -47,23 +47,27 @@ export class Universe {
         const nextIndex = 1 - this.active;
         const current = this.planets[this.active];
         const next = this.planets[nextIndex];
-        for (let i = 0; i < current.length; i++) {
+        const gravity = new Vector3();
+        const dir = new Vector3();
+        for (let i=0; i<current.length; i++) {
+            gravity.set(0, 0, 0);
             // calculate gravity from all other objects
-            const gravity = new Vector3();
-            for (let j = 0; j < current.length; j++) {
+            for (let j=0; j<current.length; j++) {
                 if (i === j) continue;
-                const dir = new Vector3().subVectors(current[j].position, current[i].position);
-                const mag = dir.length();
-                const strength = this.G * current[i].mass * current[j].mass / (mag * mag);
-                dir.multiplyScalar(strength / mag);
-                gravity.add(dir);
+                dir.subVectors(current[j].position, current[i].position);
+                const mag2 = dir.lengthSq();
+                if (mag2 > 0) {
+                    const strength = this.G * current[i].mass * current[j].mass / (mag2);
+                    dir.multiplyScalar(strength / Math.sqrt(mag2));
+                    gravity.add(dir);
+                }
             }
             // contribute to velocity
             next[i].velocity.copy(current[i].velocity);
             next[i].velocity.add(gravity.multiplyScalar(dt));
         }
         // update object positions
-        for (let i = 0; i < current.length; i++) {
+        for (let i=0; i<current.length; i++) {
             next[i].position.copy(current[i].position);
             next[i].position.add(next[i].velocity.clone().multiplyScalar(dt));
         }
