@@ -69,7 +69,7 @@ export class UniverseScene implements IScene {
     enter(): void {
         this.paused = false;
         this.scene = new THREE.Scene();
-        this.geometry = new THREE.SphereGeometry(1.0);
+        this.geometry = new THREE.SphereGeometry(1);
         this.material = new THREE.MeshNormalMaterial();
         this.universe = new Universe();
         this.onOptionsUpdated();
@@ -137,7 +137,7 @@ export class UniverseScene implements IScene {
             this.scene.add(mesh);
         }
         // reset camera
-        this.camera.position.set(-60, -60, 1200);
+        this.camera.position.set(-30, -30, 600);
         this.camera.rotation.set(0, 0, 0);
     }
     private tick(dt: number): void {
@@ -146,6 +146,10 @@ export class UniverseScene implements IScene {
         this.universe.tick(dt);
         const planets = this.universe.getPlanets();
         for (let i=0; i<planets.length; i++) {
+            if (planets[i].changed) {
+                this.meshes[i].scale.setLength(planets[i].radius);
+            }
+            this.meshes[i].visible = !planets[i].dead;
             this.meshes[i].position.copy(planets[i].position);
         }
     }

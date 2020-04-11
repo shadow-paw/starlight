@@ -1,10 +1,13 @@
 import { Vector3 } from "three";
 import { Planet } from "./planet";
 
+const PI = 3.141592675;
+
 export class Universe {
     private planets: Planet[][] = [];
     private active: number;
     G: number;
+    onPlanetMerge?: (id1: number, id2: number) => void;
 
     constructor() {
         this.G = 1;
@@ -29,6 +32,9 @@ export class Universe {
         this.active = 0;
         for (let i=0; i<numPlanets; i++) {
             this.planets[0][i] = {
+                id: i,
+                changed: false,
+                dead: false,
                 mass: Math.random() * (maxMass - 0.1) + 0.1,
                 radius: Math.random() * 0.9 + 0.1,
                 position: this.randomVector(10, maxR),
@@ -37,6 +43,9 @@ export class Universe {
         }
         for (let i=0; i<numPlanets; i++) {
             this.planets[1][i] = {
+                id: i,
+                changed: false,
+                dead: false,
                 mass: this.planets[0][i].mass,
                 radius: this.planets[0][i].radius,
                 position: new Vector3(),
@@ -50,11 +59,32 @@ export class Universe {
         const next = this.planets[nextIndex];
         const gravity = new Vector3();
         const dir = new Vector3();
+        // collsion
         for (let i=0; i<current.length; i++) {
+            if (current[i].dead) continue;
+            next[i].changed = false;
+            for (let j=0; j<current.length; j++) {
+                if (i === j || current[j].dead) continue;
+                const ds = current[i].position.distanceTo(current[j].position);
+                if (ds <= current[i].radius + current[j].radius) {
+                    current[i].mass = current[i].mass + current[j].mass;
+                    const v1 = 4 * PI / 3 * Math.pow(current[i].radius, 3);
+                    const v2 = 4 * PI / 3 * Math.pow(current[j].radius, 3);
+                    current[i].radius = Math.pow((v1 + v2) * 3 / (4 * PI), 0.33333);
+                    current[j].dead = true;
+                    next[i].mass = current[i].mass;
+                    next[i].radius = current[i].radius;
+                    next[i].changed = true;
+                    next[j].dead = true;
+                }
+            }
+        }
+        for (let i=0; i<current.length; i++) {
+            if (current[i].dead) continue;
             gravity.set(0, 0, 0);
             // calculate gravity from all other objects
             for (let j=0; j<current.length; j++) {
-                if (i === j) continue;
+                if (i === j || current[j].dead) continue;
                 dir.subVectors(current[j].position, current[i].position);
                 const mag2 = dir.lengthSq();
                 if (mag2 > 0) {
@@ -69,6 +99,7 @@ export class Universe {
         }
         // update object positions
         for (let i=0; i<current.length; i++) {
+            if (next[i].dead) continue;
             next[i].position.copy(current[i].position);
             next[i].position.add(next[i].velocity.clone().multiplyScalar(dt));
         }
