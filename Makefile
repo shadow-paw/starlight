@@ -1,4 +1,4 @@
-.PHONY: dep lint build clean
+.PHONY: dep lint build clean deploy
 
 all: build
 	@:
@@ -21,3 +21,13 @@ run: build
 
 clean:
 	@-npm run clean
+
+deploy: build
+	@$(eval $@_branch:=$(shell git rev-parse --abbrev-ref HEAD))
+	@git branch -D ops-deploy > /dev/null 2>&1 || true
+	@git checkout -b ops-deploy
+	@git add -f dist/
+	@git commit -am "deploy ops"
+	@git filter-branch -f --subdirectory-filter dist/ -- ops-deploy
+	@git push origin ops-deploy:gh-pages -f
+	@git checkout $($@_branch)
