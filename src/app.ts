@@ -20,6 +20,8 @@ export class Application {
         document.body.appendChild(this.renderer.domElement);
         window.addEventListener('resize', () => this.on_resize(), false);
 
+        this.renderer.domElement.addEventListener('click', () => console.log("click"));
+
         this.stats = new Stats();
         this.stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
         document.body.appendChild(this.stats.dom);

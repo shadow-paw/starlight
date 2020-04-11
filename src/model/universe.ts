@@ -1,13 +1,13 @@
 import { Vector3 } from "three";
 import { Planet } from "./planet";
 
-const G = 0.1;
-
 export class Universe {
     private planets: Planet[][] = [];
     private active: number;
+    G: number;
 
     constructor() {
+        this.G = 0.1;
         this.active = 0;
         this.planets = new Array<Planet[]>(2);
     }
@@ -54,7 +54,7 @@ export class Universe {
                 if (i === j) continue;
                 const dir = new Vector3().subVectors(current[j].position, current[i].position);
                 const mag = dir.length();
-                const strength = G * current[i].mass * current[j].mass / (mag * mag);
+                const strength = this.G * current[i].mass * current[j].mass / (mag * mag);
                 dir.multiplyScalar(strength / mag);
                 gravity.add(dir);
             }

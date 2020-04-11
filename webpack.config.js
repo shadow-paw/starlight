@@ -9,8 +9,7 @@ module.exports = {
     path: path.resolve(__dirname, 'dist'),
   },
   externals: [
-    {
-      'three': 'root THREE'
-    }
+    { 'three': 'root THREE' },
+    { 'dat.gui': 'root dat'}
   ]
 };
