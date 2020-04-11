@@ -1,31 +1,21 @@
-import * as THREE from "three";
+import { WebGLHelper } from "./sys/webgl";
+import { Application } from "./app";
 
-let renderer: THREE.WebGLRenderer;
-let camera: THREE.PerspectiveCamera;
-let scene: THREE.Scene;
-let geometry: THREE.BoxGeometry;
-let material: THREE.MeshNormalMaterial;
-let mesh: THREE.Mesh;
-
-init();
-animate();
-
-function init() {
-    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 10);
-    camera.position.z = 1;
-    scene = new THREE.Scene();
-    geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
-    material = new THREE.MeshNormalMaterial();
-    mesh = new THREE.Mesh( geometry, material );
-    scene.add(mesh);
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
-}
-
-function animate() {
-    requestAnimationFrame(animate);
-    mesh.rotation.x += 0.01;
-    mesh.rotation.y += 0.02;
-    renderer.render( scene, camera );
+if (WebGLHelper.isWebGLAvailable()) {
+	const app = new Application();
+	app.start();
+} else {
+    const message = 'Your browser does not seem to support <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" style="color:#000">WebGL</a>.';
+    const element = document.createElement('div');
+	element.style.fontFamily = 'monospace';
+	element.style.fontSize = '13px';
+	element.style.fontWeight = 'normal';
+	element.style.textAlign = 'center';
+	element.style.background = '#fff';
+	element.style.color = '#000';
+	element.style.padding = '1.5em';
+	element.style.width = '400px';
+    element.style.margin = '5em auto 0';
+    element.innerHTML = message;
+    document.body.appendChild(element);
 }
