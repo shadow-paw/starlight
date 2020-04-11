@@ -7,31 +7,32 @@ export class Universe {
     G: number;
 
     constructor() {
-        this.G = 0.1;
+        this.G = 1;
         this.active = 0;
         this.planets = new Array<Planet[]>(2);
     }
     getPlanets(): Planet[] {
         return this.planets[this.active];
     }
-    private randomVector(length: number): Vector3 {
+    private randomVector(minLength: number, maxLength: number): Vector3 {
         const x = Math.random() - 0.5;
         const y = Math.random() - 0.5;
         const z = Math.random() - 0.5;
+        const r = Math.random() * (maxLength - minLength) + minLength;
         const mag = Math.sqrt(x*x + y*y + z*z);
-        const scale = length / mag;
+        const scale = r / mag;
         return new Vector3(x * scale, y * scale, z * scale);
     }
-    randomize(numPlanets: number, maxR: number, maxVelocity: number): void {
+    randomize(numPlanets: number, maxR: number, maxMass: number, maxVelocity: number): void {
         this.planets[0] = new Array<Planet>(numPlanets);
         this.planets[1] = new Array<Planet>(numPlanets);
         this.active = 0;
         for (let i=0; i<numPlanets; i++) {
             this.planets[0][i] = {
-                mass: Math.random() * 0.899 + 0.101,
+                mass: Math.random() * (maxMass - 0.1) + 0.1,
                 radius: Math.random() * 0.9 + 0.1,
-                position: this.randomVector(maxR * Math.random()),
-                velocity: this.randomVector(maxVelocity * Math.random()),
+                position: this.randomVector(10, maxR),
+                velocity: this.randomVector(0, maxVelocity),
             }
         }
         for (let i=0; i<numPlanets; i++) {

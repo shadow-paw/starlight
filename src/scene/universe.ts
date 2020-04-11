@@ -5,9 +5,10 @@ import { Universe } from "../model/universe";
 
 interface UniverseOptions {
     gravity: number;
-    numPlanets: number;
-    maxR: number;
-    maxVelocity: number;
+    Ru: number;
+    planets: number;
+    mass: number;
+    velocity: number;
 }
 
 export class UniverseScene implements IScene {
@@ -30,29 +31,35 @@ export class UniverseScene implements IScene {
         this.material = null;
         this.meshes = [];
         this.universe = null;
-        this.options = { gravity: 50, numPlanets: 1000, maxR: 1000, maxVelocity: 50 };
+        this.options = { gravity: 100, Ru: 500, planets: 1000, mass: 100, velocity: 20 };
         this.gui = new DAT.GUI({
             width : 256
         });
         this.gui.add(this.options, 'gravity')
                 .name('Gravity')
                 .min(0)
-                .max(100)
+                .max(1000)
                 .step(10)
                 .onFinishChange(() => this.onOptionsUpdated());
-        this.gui.add(this.options, 'maxR')
+        this.gui.add(this.options, 'Ru')
                 .name('Size of universe')
                 .min(100)
-                .max(2000)
+                .max(5000)
                 .step(10)
                 .onFinishChange(() => this.onOptionsUpdated());
-        this.gui.add(this.options, 'numPlanets')
+        this.gui.add(this.options, 'planets')
                 .name('Planets')
                 .min(100)
-                .max(2500)
+                .max(3000)
                 .step(10)
                 .onFinishChange(() => this.onOptionsUpdated());
-        this.gui.add(this.options, 'maxVelocity')
+        this.gui.add(this.options, 'mass')
+                .name('Mass')
+                .min(10)
+                .max(1000)
+                .step(10)
+                .onFinishChange(() => this.onOptionsUpdated());
+        this.gui.add(this.options, 'velocity')
                 .name('Initial Velocity')
                 .min(1)
                 .max(100)
@@ -98,7 +105,7 @@ export class UniverseScene implements IScene {
             if (ev.shiftKey) {
                 const dir = this.camera.position.clone()
                                                 .normalize()
-                                                .multiplyScalar(ev.movementY > 0 ? 10 : -10);
+                                                .multiplyScalar(ev.movementY > 0 ? 20 : -20);
                 this.camera.position.add(dir);
             } else {
                 this.camera.rotateY(ev.movementX * -0.01);
@@ -116,8 +123,11 @@ export class UniverseScene implements IScene {
         // remove previous mesh
         this.meshes.forEach(mesh => this.scene.remove(mesh));
         // re-create world
-        this.universe.G = this.options.gravity * 0.002;
-        this.universe.randomize(this.options.numPlanets, this.options.maxR, this.options.maxVelocity / 1000);
+        this.universe.G = this.options.gravity * 0.000000667430;
+        this.universe.randomize(this.options.planets,
+                                this.options.Ru,
+                                this.options.mass * 0.01,
+                                this.options.velocity * 0.0005);
         const planets = this.universe.getPlanets();
         this.meshes = new Array<THREE.Mesh>(planets.length);
         for (let i=0; i<planets.length; i++) {
@@ -127,7 +137,7 @@ export class UniverseScene implements IScene {
             this.scene.add(mesh);
         }
         // reset camera
-        this.camera.position.set(-100, -100, 1200);
+        this.camera.position.set(-60, -60, 1200);
         this.camera.rotation.set(0, 0, 0);
     }
     private tick(dt: number): void {
