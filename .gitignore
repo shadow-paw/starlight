@@ -1,2 +1,6 @@
 .vscode/
 *.code-workspace
+
+node_modules/
+generated/
+dist/app.js
