@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-export interface IStage {
+export interface IScene {
     enter(): void;
     leave(): void;
     resize(width: number, height: number): void;

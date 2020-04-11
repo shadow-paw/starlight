@@ -1,40 +1,29 @@
 import * as THREE from "three";
 import { IStage } from "./istage";
+import { IScene } from "../scene/iscene";
+import { UniverseScene } from "../scene/universe";
 
 export class MainStage implements IStage {
-    private camera: THREE.PerspectiveCamera;
-    private scene: THREE.Scene | null;
-    private mesh: THREE.Mesh | null;
-    private geometry: THREE.BoxGeometry | null;
-    private material: THREE.MeshNormalMaterial | null;
+    private scene: IScene | null;
 
     constructor() {
-        this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 10);
-        this.camera.position.z = 1;
+        this.scene = null;
     }
     enter(): void {
-        this.scene = new THREE.Scene();
-        this.geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
-        this.material = new THREE.MeshNormalMaterial();
-        this.mesh = new THREE.Mesh(this.geometry, this.material);
-        this.scene.add(this.mesh);
+        this.scene = new UniverseScene();
+        this.scene.enter();
     }
     leave(): void {
-        this.scene.remove(this.mesh);
-        this.scene.dispose(); this.scene = null;
-        this.mesh = null;
-        this.geometry.dispose(); this.geometry = null;
-        this.material.dispose(); this.material = null;
+        if (this.scene) {
+            this.scene.leave();
+            this.scene = null;
+        }
     }
     resize(width: number, height: number): void {
-        this.camera.aspect = width / height;
-        this.camera.updateProjectionMatrix();
+        this.scene.resize(width, height);
     }
-    animate(renderer: THREE.WebGLRenderer, t: DOMHighResTimeStamp): void {
+    animate(renderer: THREE.WebGLRenderer, dt: number): void {
         if (!this.scene) return;
-
-        this.mesh.rotation.x += 0.01;
-        this.mesh.rotation.y += 0.02;
-        renderer.render(this.scene, this.camera);
+        this.scene.animate(renderer, dt);
     }
 }

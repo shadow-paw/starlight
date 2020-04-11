@@ -8,9 +8,11 @@ export class Application {
     private stats: Stats;
     private animateTimer: number | undefined;
     private renderer: THREE.WebGLRenderer;
+    private lastT: DOMHighResTimeStamp;
     private stage: IStage | null;
 
     constructor() {
+        this.lastT = 0;
         this.stage = null;
         this.run = false;
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -26,7 +28,8 @@ export class Application {
         this.stage = new MainStage();
         this.stage.enter();
         this.run = true;
-        this.animate(performance.now());
+        this.lastT = performance.now();
+        this.animate(this.lastT);
     }
     stop() {
         this.run = false;
@@ -51,6 +54,8 @@ export class Application {
         this.stage.resize(window.innerWidth, window.innerHeight);
     }
     private on_animate(t: DOMHighResTimeStamp) {
-        this.stage.animate(this.renderer, t);
+        const dt = t - this.lastT;
+        this.lastT = t;
+        this.stage.animate(this.renderer, dt);
     }
 }
