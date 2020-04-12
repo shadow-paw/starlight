@@ -1,8 +1,6 @@
 import { Vector3 } from "three";
 import { Planet } from "./planet";
 
-const PI = 3.141592675;
-
 export class Universe {
     private planets: Planet[][] = [];
     private active: number;
@@ -68,9 +66,9 @@ export class Universe {
                 const ds = current[i].position.distanceTo(current[j].position);
                 if (ds <= current[i].radius + current[j].radius) {
                     current[i].mass = current[i].mass + current[j].mass;
-                    const v1 = 4 * PI / 3 * Math.pow(current[i].radius, 3);
-                    const v2 = 4 * PI / 3 * Math.pow(current[j].radius, 3);
-                    current[i].radius = Math.pow((v1 + v2) * 3 / (4 * PI), 0.33333);
+                    const v1 = 4 * Math.PI / 3 * Math.pow(current[i].radius, 3);
+                    const v2 = 4 * Math.PI / 3 * Math.pow(current[j].radius, 3);
+                    current[i].radius = Math.pow((v1 + v2) * 3 / (4 * Math.PI), 1/3);
                     current[j].dead = true;
                     next[i].mass = current[i].mass;
                     next[i].radius = current[i].radius;

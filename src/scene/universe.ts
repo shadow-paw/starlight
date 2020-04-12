@@ -2,6 +2,7 @@ import * as THREE from "three";
 import * as DAT from "dat.gui";
 import { IScene } from "./iscene";
 import { Universe } from "../model/universe";
+import { SimpleGestureDetector } from "../input/gesture/simple";
 
 interface UniverseOptions {
     gravity: number;
@@ -21,6 +22,7 @@ export class UniverseScene implements IScene {
     private gui: DAT.GUI;
     private options: UniverseOptions;
     private paused: boolean;
+    private gesture: SimpleGestureDetector;
 
     constructor() {
         this.paused = false;
@@ -65,6 +67,16 @@ export class UniverseScene implements IScene {
                 .max(100)
                 .step(5)
                 .onFinishChange(() => this.onOptionsUpdated());
+        this.gesture = new SimpleGestureDetector();
+        this.gesture.onClick = (points) => {
+            if (points === 1) this.onMouseClick(1);
+        };
+        this.gesture.onDrag = (dx, dy) => {
+            // TODO: handle pixel density
+            this.onDrag(dx * 2, dy * 2);
+        };
+        this.gesture.onPan = (dx, dy) => this.onPan(dx, dy);
+        this.gesture.onZoom = (delta) => this.onZoom(delta);
     }
     enter(): void {
         this.paused = false;
@@ -96,28 +108,51 @@ export class UniverseScene implements IScene {
             renderer.render(this.scene, this.camera);
         }
     }
-    onMouseUp(ev: MouseEvent): void {
-    }
     onMouseDown(ev: MouseEvent): void {
+    }
+    onMouseUp(ev: MouseEvent): void {
     }
     onMouseMove(ev: MouseEvent): void {
         if (ev.buttons === 1) {
-            if (ev.shiftKey) {
-                const dir = this.camera.position.clone()
-                                                .normalize()
-                                                .multiplyScalar(ev.movementY > 0 ? 20 : -20);
-                this.camera.position.add(dir);
-            } else {
-                this.camera.rotateY(ev.movementX * -0.01);
-                this.camera.rotateX(ev.movementY * -0.01);
-            }
+            this.onDrag(ev.movementX, ev.movementY);
         } else if (ev.buttons === 2) {
-            this.camera.position.x -= ev.movementX;
-            this.camera.position.y -= ev.movementY;
+            this.onPan(ev.movementX, -ev.movementY);
         }
     }
-    onMouseClick(ev: MouseEvent): void {
-        this.paused = !this.paused;
+    onMouseClick(button: number): void {
+        if (button === 1) {
+            this.paused = !this.paused;
+        }
+    }
+    onMouseWheel(ev: WheelEvent): void {
+        this.onZoom(ev.deltaY > 0 ? 20 : -20);
+    }
+    onTouchStart(ev: TouchEvent): void {
+        this.gesture.touchStart(ev);
+    }
+    onTouchEnd(ev: TouchEvent): void {
+        this.gesture.touchEnd(ev);
+    }
+    onTouchCancel(ev: TouchEvent): void {
+        this.gesture.touchCancel(ev);
+    }
+    onTouchMove(ev: TouchEvent): void {
+        this.gesture.touchMove(ev);
+    }
+    private onDrag(dx: number, dy: number) {
+        this.camera.rotateY(dx * 0.001);
+        this.camera.rotateX(dy * 0.001);
+    }
+    private onPan(dx: number, dy: number) {
+        this.camera.position.x -= dx;
+        this.camera.position.y -= dy;
+    }
+    private onZoom(delta: number) {
+        const lookAt = new THREE.Vector3(0, 0, -1);
+        lookAt.applyQuaternion(this.camera.quaternion)
+              .normalize()
+              .multiplyScalar(delta);
+        this.camera.position.sub(lookAt);
     }
     private onOptionsUpdated(): void {
         // remove previous mesh

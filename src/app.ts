@@ -10,7 +10,7 @@ export class Application {
     private renderer: THREE.WebGLRenderer;
     private lastT: DOMHighResTimeStamp;
     private stage: IStage | null;
-    private isMouseMoved: boolean;
+    private mouseClickButton: number | null;
 
     constructor() {
         this.lastT = 0;
@@ -23,24 +23,51 @@ export class Application {
         document.body.appendChild(this.renderer.domElement);
         window.addEventListener('resize', () => this.on_resize(), false);
 
-        this.isMouseMoved = false;
-        this.renderer.domElement.addEventListener('mousedown', (ev) => {
+        const dom = this.renderer.domElement;
+
+        // Mouse Events
+        this.mouseClickButton = null;
+        dom.addEventListener("mousedown", (ev) => {
             ev.preventDefault();
-            this.isMouseMoved = false;
-            if (this.stage) this.stage.onMouseDown(ev);
-        });
-        this.renderer.domElement.addEventListener('mouseup', (ev) => {
-            ev.preventDefault();
-            if (this.stage) {
-                this.stage.onMouseUp(ev);
-                if (!this.isMouseMoved) this.stage.onMouseClick(ev);
+            if (ev.buttons === 1 || ev.buttons === 2 || ev.buttons === 4) {
+                this.mouseClickButton = ev.buttons;
             }
-        });
-        this.renderer.domElement.addEventListener('mousemove', (ev) => {
+            this.stage?.onMouseDown(ev);
+        }, false);
+        dom.addEventListener("mouseup", (ev) => {
             ev.preventDefault();
-            this.isMouseMoved = true;
-            if (this.stage) this.stage.onMouseMove(ev);
-        });
+            this.stage?.onMouseUp(ev);
+            if (this.mouseClickButton) {
+                this.stage?.onMouseClick(this.mouseClickButton);
+            }
+        }, false);
+        dom.addEventListener("mousemove", (ev) => {
+            ev.preventDefault();
+            this.mouseClickButton = null;
+            this.stage?.onMouseMove(ev);
+        }, false);
+        dom.addEventListener("wheel", (ev) => {
+            ev.preventDefault();
+            this.mouseClickButton = null;
+            this.stage?.onMouseWheel(ev);
+        }, false);
+        // Touch Events
+        dom.addEventListener("touchstart", (ev) => {
+            ev.preventDefault();
+            this.stage?.onTouchStart(ev);
+        }, false);
+        dom.addEventListener("touchend", (ev) => {
+            ev.preventDefault();
+            this.stage?.onTouchEnd(ev);
+        }, false);
+        dom.addEventListener("touchcancel", (ev) => {
+            ev.preventDefault();
+            this.stage?.onTouchCancel(ev);
+        }, false);
+        dom.addEventListener("touchmove", (ev) => {
+            ev.preventDefault();
+            this.stage?.onTouchMove(ev);
+        }, false);
 
         this.stats = new Stats();
         this.stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom

@@ -25,16 +25,31 @@ export class MainStage implements IStage {
     animate(renderer: THREE.WebGLRenderer, dt: number): void {
         this.scene?.animate(renderer, dt);
     }
-    onMouseUp(ev: MouseEvent): void {
-        this.scene?.onMouseUp(ev);
-    }
     onMouseDown(ev: MouseEvent): void {
         this.scene?.onMouseDown(ev);
+    }
+    onMouseUp(ev: MouseEvent): void {
+        this.scene?.onMouseUp(ev);
     }
     onMouseMove(ev: MouseEvent): void {
         this.scene?.onMouseMove(ev);
     }
-    onMouseClick(ev: MouseEvent): void {
-        this.scene?.onMouseClick(ev);
+    onMouseWheel(ev: WheelEvent): void {
+        this.scene?.onMouseWheel(ev);
+    }
+    onMouseClick(button: number): void {
+        this.scene?.onMouseClick(button);
+    }
+    onTouchStart(ev: TouchEvent): void {
+        this.scene?.onTouchStart(ev);
+    }
+    onTouchEnd(ev: TouchEvent): void {
+        this.scene?.onTouchEnd(ev);
+    }
+    onTouchCancel(ev: TouchEvent): void {
+        this.scene?.onTouchCancel(ev);
+    }
+    onTouchMove(ev: TouchEvent): void {
+        this.scene?.onTouchMove(ev);
     }
 }
