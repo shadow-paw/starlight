@@ -1,0 +1,30 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.exclude": {
+			"*.code-workspace": true,
+			"**/.eslintcache": true,
+			"**/.vs/": true,
+			"**/.vscode/": true,
+			"**/*.csproj": true,
+			"**/bin/": true,
+			"**/dist/": true,
+			"**/generated/": true,
+			"**/lib/": true,
+			"**/node_modules/": true,
+			"**/obj/": true,
+			"**/package-lock.json": true,
+			"coverage/": true
+		},
+		"editor.rulers": [
+			120
+		],
+		"files.trimFinalNewlines": true,
+		"files.trimTrailingWhitespace": true,
+		"files.eol": "\n"
+	}
+}

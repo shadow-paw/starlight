@@ -1,0 +1,6 @@
+{
+  "ignore": ["node_modules", "dist"],
+  "watch": ["./src"],
+  "exec": "npm i && npm run build && npm run serve",
+  "ext": "ts"
+}

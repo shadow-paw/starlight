@@ -1,0 +1,18 @@
+services:
+  web:
+    image: node:23.11-bookworm-slim
+    command: npx nodemon --legacy-watch --delay 500ms
+    working_dir: /app
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./src/:/app/src/:ro
+      - ./.prettierignore:/app/.prettierignore:ro
+      - ./eslint.config.mjs:/app/eslint.config.mjs:ro
+      - ./nodemon.json:/app/nodemon.json:ro
+      - ./tsconfig.json:/app/tsconfig.json:/ro
+      - ./webpack.config.js:/app/webpack.config.js:ro
+      - ./Makefile:/app/Makefile:ro
+      - ./package.json:/app/package.json:ro
+      - ./package-lock.json:/app/package-lock.json
+    # environment:

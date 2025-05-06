@@ -1,0 +1,34 @@
+{
+  "compilerOptions": {
+    "outDir": "generated/",
+    "typeRoots": ["./src/@types", "./node_modules/@types"],
+    "module": "es6",
+    "target": "es6",
+    "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "sourceMap": true,
+    "strict": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "noImplicitAny": true,
+    "removeComments": true,
+    "rootDirs": [
+      "src",
+      "tests",
+    ],
+    "paths": {
+      "@/*": ["src/*"],
+      "*": [
+        "src/@types/*",
+        "node_modules/@types/*",
+        "node_modules/*",
+      ]
+    }
+  },
+  "include": [ "src/**/*.ts", "tests/**/*.ts" ],
+  "exclude": [ "node_modules/**/*", "**/*.spec.ts", "test/**.ts" ]
+}
