@@ -87,6 +87,11 @@ module.exports = {
             name: '[path][name].[ext]'
         },
       },
+      {
+        test: /\.(glsl)$/i,
+        exclude: /node_modules/,
+        type: 'asset/source',
+      },
     ],
   },
   optimization: {

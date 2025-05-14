@@ -8,6 +8,9 @@ body {
   padding: 0 !important;
   overflow: hidden;
   overscroll-behavior: contain;
+  *:focus {
+    outline: none;
+  }
 }
 #container_3d {
   position: absolute;
@@ -28,5 +31,5 @@ body {
   top: 0px;
   right: 0px;
   z-index: 3;
-  pointer-events: auto;
+  pointer-events: none;
 }
