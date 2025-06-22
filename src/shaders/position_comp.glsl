@@ -15,6 +15,8 @@ void main() {
     vec2 uv = xy / resolution.xy;
     vec4 pos = texture2D(texPosition, uv);
     vec4 vel = texture2D(texVelocity, uv);
+    float mass = vel.w;
+    if (mass < 0.0) discard;
     // x' = x + vt
     vec4 next_pos = vec4(pos.xyz + vel.xyz * dt, pos.w);
     gl_FragColor = next_pos;

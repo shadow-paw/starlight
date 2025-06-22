@@ -63,7 +63,7 @@ export class WorldState {
     if (name == "normal") return 0;
     return 0;
   }
-  restart(options: WorldStateOptions): void {
+  restart(options: WorldStateOptions, texTemperature: THREE.Texture): void {
     this.dispose();
     const texSize = this.calculateTextureSize(options.nParticles);
     const gpu = new GPUComputationRenderer(texSize, texSize, this.renderer);
@@ -155,7 +155,7 @@ export class WorldState {
         value: options.density,
       };
       v.material.uniforms["G"] = {
-        value: 0.0066743 * options.gravity,
+        value: 0.00066743 * options.gravity,
       };
       v.material.uniforms["dt"] = {
         value: 1.0,
@@ -164,6 +164,7 @@ export class WorldState {
     gpu.setVariableDependencies(varVelocity, [varPosition, varVelocity]);
     gpu.setVariableDependencies(varPosition, [varPosition, varVelocity]);
     gpu.init();
+
     // create render objects
     const particleGeometry = new THREE.BufferGeometry();
     // NOTE: position attribute is not used as we use positions from the computed texture
@@ -175,6 +176,7 @@ export class WorldState {
     const particleUniforms = {
       texPosition: { value: null },
       texVelocity: { value: null },
+      texTemperature: { value: texTemperature },
       cameraScale: { value: 1.0 },
       density: { value: options.density },
     };

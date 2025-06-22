@@ -3,6 +3,7 @@ import * as DAT from "dat.gui";
 import { CSS2DRenderer, OrbitControls } from "three/addons";
 import { container } from "tsyringe";
 import { WorldState, WorldStateOptions } from "./state";
+import TemperatureSpectrum from "@assets/temperature_spectrum.png";
 
 interface SimulatorOptions {
   stateOptions: WorldStateOptions;
@@ -14,6 +15,7 @@ export class Simulator {
   private controls: OrbitControls;
   private scene: THREE.Scene;
   private camera: THREE.PerspectiveCamera;
+  private texTemperature: THREE.Texture;
   private state: WorldState;
   private cameraScale: number = 1.0;
   private gui: DAT.GUI;
@@ -28,11 +30,14 @@ export class Simulator {
     this.controls = new OrbitControls(this.camera, $("#container_3d")[0]);
     this.controls.update();
     this.state = new WorldState(this.renderer);
+    // load textures
+    const texLoader = new THREE.TextureLoader();
+    this.texTemperature = texLoader.load(TemperatureSpectrum);
     this.options = {
       stateOptions: {
         spaceTopology: "normal",
         spaceRadius: 1000,
-        collisions: false,
+        collisions: true,
         gravity: 1,
         nParticles: 10000,
         density: 1,
@@ -78,12 +83,13 @@ export class Simulator {
       .name("Initial Mass")
       .onChange(() => this.onOptionsUpdated());
     guiInitialCondition
-      .add(this.options.stateOptions, "initialVelocity", 0, 1000, 5)
+      .add(this.options.stateOptions, "initialVelocity", 0, 5000, 10)
       .name("Initial Velocity")
       .onChange(() => this.onOptionsUpdated());
   }
   dispose(): void {
     this.scene.clear();
+    this.texTemperature.dispose();
     this.controls.dispose();
     this.state.dispose();
     this.gui.domElement.remove();
@@ -114,7 +120,7 @@ export class Simulator {
     );
     this.camera.lookAt(new THREE.Vector3(0, 0, 0));
     this.controls.update();
-    this.state.restart(this.options.stateOptions);
+    this.state.restart(this.options.stateOptions, this.texTemperature);
     this.state.updateCameraScale(this.cameraScale);
     if (this.state.model) {
       this.scene.add(this.state.model);
