@@ -16,7 +16,7 @@ interface RenderState {
   particles: THREE.Points;
 }
 
-export type SpaceTopology = "normal";
+export type SpaceTopology = "normal" | "torus";
 
 export interface WorldStateOptions {
   spaceTopology: SpaceTopology;
@@ -61,6 +61,7 @@ export class WorldState {
   }
   private spaceTopology(name: SpaceTopology): number {
     if (name == "normal") return 0;
+    if (name == "torus") return 1;
     return 0;
   }
   restart(options: WorldStateOptions, texTemperature: THREE.Texture): void {

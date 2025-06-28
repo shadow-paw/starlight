@@ -6,6 +6,7 @@ precision highp float;
 #include <common>
 
 const int TOPOLOGY_NORMAL = 0;
+const int TOPOLOGY_TORUS = 1;
 
 uniform float nParticles;
 uniform int   spaceTopology;
@@ -39,11 +40,20 @@ void main() {
                 vec2 other_uv = vec2(x + 0.5, y + 0.5) / resolution.xy;
                 vec4 other_pos = texture2D(texPosition, other_uv);
                 vec4 other_vel = texture2D(texVelocity, other_uv);
+                if (other_pos.xyz == pos.xyz) continue;
                 float other_mass = other_vel.w;
                 if (other_mass <= 0.0) continue;
+
                 vec3 r = other_pos.xyz - pos.xyz;
+                if (spaceTopology == TOPOLOGY_TORUS) {
+                    // treat each dimension as the arc length in a circle
+                    // x = theta * R, where a is the dimension radius
+                    // going further you back to where you started
+                    // thus we can take x' = x mod 2PIR, and we take spaceRadius = 2PIR
+                    r.xyz = mod(r.xyz + spaceRadius, spaceDiameter) - spaceRadius;
+                }
                 float r2 = dot(r, r);
-                if (r2 == 0.0) continue;
+
                 if (collisions) {
                     float other_id = other_uv.y * width + other_uv.x;
                     float other_radius = radiusFromMass(other_mass);

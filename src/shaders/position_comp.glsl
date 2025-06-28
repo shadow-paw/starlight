@@ -1,6 +1,7 @@
 precision highp float;
 
 const int TOPOLOGY_NORMAL = 0;
+const int TOPOLOGY_TORUS = 1;
 
 uniform float nParticles;
 uniform int   spaceTopology;
@@ -18,6 +19,13 @@ void main() {
     float mass = vel.w;
     if (mass < 0.0) discard;
     // x' = x + vt
-    vec4 next_pos = vec4(pos.xyz + vel.xyz * dt, pos.w);
-    gl_FragColor = next_pos;
+    vec3 next_pos = pos.xyz + vel.xyz * dt;
+    if (spaceTopology == TOPOLOGY_TORUS) {
+        // treat each dimension as the arc length in a circle
+        // x = theta * R, where a is the dimension radius
+        // going further you back to where you started
+        // thus we can take x' = x mod 2PIR, and we take spaceRadius = 2PIR
+        next_pos = mod(next_pos + spaceRadius, spaceRadius * 2.0) - spaceRadius;
+    }
+    gl_FragColor = vec4(next_pos, pos.w);
 }

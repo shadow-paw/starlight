@@ -1,8 +1,14 @@
 import * as THREE from "three";
 import * as DAT from "dat.gui";
-import { CSS2DRenderer, OrbitControls } from "three/addons";
+import {
+  CSS2DRenderer,
+  LineMaterial,
+  LineSegments2,
+  LineSegmentsGeometry,
+  OrbitControls,
+} from "three/addons";
 import { container } from "tsyringe";
-import { WorldState, WorldStateOptions } from "./state";
+import { SpaceTopology, WorldState, WorldStateOptions } from "./state";
 import TemperatureSpectrum from "@assets/temperature_spectrum.png";
 
 interface SimulatorOptions {
@@ -58,6 +64,13 @@ export class Simulator {
       .name("Universe Size")
       .onChange(() => this.onOptionsUpdated());
     guiPhysics
+      .add(this.options.stateOptions, "spaceTopology", {
+        Normal: "normal",
+        Torus: "torus",
+      })
+      .name("Topology")
+      .onChange(() => this.onOptionsUpdated());
+    guiPhysics
       .add(this.options.stateOptions, "collisions")
       .name("Collisions")
       .onChange(() => this.onOptionsUpdated());
@@ -111,12 +124,10 @@ export class Simulator {
   }
   onOptionsUpdated(): void {
     this.scene.clear();
-    // this.scene.add(new THREE.AxesHelper(100));
-    // this.scene.add(new THREE.GridHelper(this.options.stateOptions.spaceRadius * 2, 256));
     this.camera.position.set(
-      0,
-      this.options.stateOptions.spaceRadius * 2,
-      this.options.stateOptions.spaceRadius * 4,
+      this.options.stateOptions.spaceRadius * 1.5,
+      this.options.stateOptions.spaceRadius * 1.5,
+      this.options.stateOptions.spaceRadius * 3,
     );
     this.camera.lookAt(new THREE.Vector3(0, 0, 0));
     this.controls.update();
@@ -125,6 +136,7 @@ export class Simulator {
     if (this.state.model) {
       this.scene.add(this.state.model);
     }
+    this.addBound(this.scene, this.options.stateOptions.spaceTopology);
     this.state.tick();
   }
   onKeyDown(ev: KeyboardEvent): void {
@@ -141,5 +153,27 @@ export class Simulator {
     this.controls.update();
     this.renderer.render(this.scene, this.camera);
     this.css.render(this.scene, this.camera);
+  }
+  private addBound(scene: THREE.Scene, topology: SpaceTopology): void {
+    if (topology == "torus") {
+      const box = new THREE.BoxGeometry(
+        this.options.stateOptions.spaceRadius * 2,
+        this.options.stateOptions.spaceRadius * 2,
+        this.options.stateOptions.spaceRadius * 2,
+      );
+      const line = new LineSegments2(
+        new LineSegmentsGeometry().fromEdgesGeometry(
+          new THREE.EdgesGeometry(box),
+        ),
+        new LineMaterial({
+          dashed: true,
+          color: 0x2f2f2f,
+          opacity: 0.4,
+          depthTest: false,
+          transparent: true,
+        }),
+      );
+      scene.add(line);
+    }
   }
 }
