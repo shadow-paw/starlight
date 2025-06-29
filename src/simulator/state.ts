@@ -17,12 +17,15 @@ interface RenderState {
 }
 
 export type SpaceTopology = "normal" | "torus";
+export type GravityLaw = "none" | "newton" | "mond";
 
 export interface WorldStateOptions {
   spaceTopology: SpaceTopology;
   spaceRadius: number;
   collisions: boolean;
+  gravityLaw: GravityLaw;
   gravity: number;
+  gravityMondA0: number;
   density: number;
   nParticles: number;
   initialDistribution: "cubical" | "spherical";
@@ -62,6 +65,12 @@ export class WorldState {
   private spaceTopology(name: SpaceTopology): number {
     if (name == "normal") return 0;
     if (name == "torus") return 1;
+    return 0;
+  }
+  private gravityLaw(law: GravityLaw): number {
+    if (law == "none") return 0;
+    if (law == "newton") return 1;
+    if (law == "mond") return 2;
     return 0;
   }
   restart(options: WorldStateOptions, texTemperature: THREE.Texture): void {
@@ -155,8 +164,14 @@ export class WorldState {
       v.material.uniforms["density"] = {
         value: options.density,
       };
+      v.material.uniforms["gravityLaw"] = {
+        value: this.gravityLaw(options.gravityLaw),
+      };
       v.material.uniforms["G"] = {
         value: 0.00066743 * options.gravity,
+      };
+      v.material.uniforms["gravityMondA0"] = {
+        value: 0.0000000012 * options.gravityMondA0,
       };
       v.material.uniforms["dt"] = {
         value: 1.0,

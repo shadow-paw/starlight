@@ -24,9 +24,16 @@ export class Simulator {
   private texTemperature: THREE.Texture;
   private state: WorldState;
   private cameraScale: number = 1.0;
-  private gui: DAT.GUI;
   private options: SimulatorOptions;
   private paused: boolean = false;
+  private gui: {
+    root: DAT.GUI;
+    gravity: {
+      folder: DAT.GUI;
+      strength: DAT.GUIController | null;
+      MONDa0: DAT.GUIController | null;
+    };
+  };
 
   constructor() {
     this.renderer = container.resolve(THREE.WebGLRenderer);
@@ -44,7 +51,9 @@ export class Simulator {
         spaceTopology: "normal",
         spaceRadius: 1000,
         collisions: true,
+        gravityLaw: "newton",
         gravity: 1,
+        gravityMondA0: 100,
         nParticles: 10000,
         density: 1,
         initialDistribution: "spherical",
@@ -52,12 +61,12 @@ export class Simulator {
         initialVelocity: 100,
       },
     };
-    this.gui = new DAT.GUI({
+    const gui = new DAT.GUI({
       autoPlace: true,
       width: 256,
     });
-    $(this.gui.domElement).css("pointer-events", "auto");
-    const guiPhysics = this.gui.addFolder("Physics");
+    $(gui.domElement).css("pointer-events", "auto");
+    const guiPhysics = gui.addFolder("Physics");
     guiPhysics.open();
     guiPhysics
       .add(this.options.stateOptions, "spaceRadius", 1000, 10000, 100)
@@ -74,11 +83,24 @@ export class Simulator {
       .add(this.options.stateOptions, "collisions")
       .name("Collisions")
       .onChange(() => this.onOptionsUpdated());
-    guiPhysics
+    const guiGravity = gui.addFolder("Gravity");
+    guiGravity.open();
+    guiGravity
+      .add(this.options.stateOptions, "gravityLaw", {
+        Disabled: "none",
+        Newton: "newton",
+        MOND: "mond",
+      })
+      .name("Law")
+      .onChange(() => {
+        this.updateGravityMenu();
+        this.onOptionsUpdated();
+      });
+    const gravityStrength = guiGravity
       .add(this.options.stateOptions, "gravity", -100, 100, 1)
-      .name("Gravity")
+      .name("Strength")
       .onChange(() => this.onOptionsUpdated());
-    const guiInitialCondition = this.gui.addFolder("Initial Condition");
+    const guiInitialCondition = gui.addFolder("Initial Condition");
     guiInitialCondition.open();
     guiInitialCondition
       .add(this.options.stateOptions, "nParticles", 10, 20000, 10)
@@ -96,19 +118,27 @@ export class Simulator {
       .name("Initial Mass")
       .onChange(() => this.onOptionsUpdated());
     guiInitialCondition
-      .add(this.options.stateOptions, "initialVelocity", 0, 5000, 10)
+      .add(this.options.stateOptions, "initialVelocity", 0, 5000, 1)
       .name("Initial Velocity")
       .onChange(() => this.onOptionsUpdated());
+    this.gui = {
+      root: gui,
+      gravity: {
+        folder: guiGravity,
+        strength: gravityStrength,
+        MONDa0: null,
+      },
+    };
   }
   dispose(): void {
     this.scene.clear();
     this.texTemperature.dispose();
     this.controls.dispose();
     this.state.dispose();
-    this.gui.domElement.remove();
+    this.gui.root.domElement.remove();
   }
   init(): void {
-    $("#container_dom").append(this.gui.domElement);
+    $("#container_dom").append(this.gui.root.domElement);
     this.scene.clear();
     this.onOptionsUpdated();
   }
@@ -153,6 +183,33 @@ export class Simulator {
     this.controls.update();
     this.renderer.render(this.scene, this.camera);
     this.css.render(this.scene, this.camera);
+  }
+  private updateGravityMenu(): void {
+    if (
+      this.options.stateOptions.gravityLaw == "newton" ||
+      this.options.stateOptions.gravityLaw == "mond"
+    ) {
+      if (this.gui.gravity.strength == null) {
+        this.gui.gravity.strength = this.gui.gravity.folder
+          .add(this.options.stateOptions, "gravity", -100, 100, 1)
+          .name("Strength")
+          .onChange(() => this.onOptionsUpdated());
+      }
+    } else {
+      this.gui.gravity.strength?.remove();
+      this.gui.gravity.strength = null;
+    }
+    if (this.options.stateOptions.gravityLaw == "mond") {
+      if (this.gui.gravity.MONDa0 == null) {
+        this.gui.gravity.MONDa0 = this.gui.gravity.folder
+          .add(this.options.stateOptions, "gravityMondA0", 1, 1000, 1)
+          .name("MOND: a₀")
+          .onChange(() => this.onOptionsUpdated());
+      }
+    } else {
+      this.gui.gravity.MONDa0?.remove();
+      this.gui.gravity.MONDa0 = null;
+    }
   }
   private addBound(scene: THREE.Scene, topology: SpaceTopology): void {
     if (topology == "torus") {
