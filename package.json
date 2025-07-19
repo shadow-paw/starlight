@@ -12,6 +12,7 @@
     "lint": "prettier src/ tests/ --check && eslint src/ tests/ && tsc --noEmit",
     "format": "prettier src/ tests/ --cache --write && eslint src/ tests/ --cache --fix",
     "serve": "npx http-server dist/",
+    "nodemon": "npx nodemon --legacy-watch --delay 500ms",
     "test": "vitest run",
     "coverage": "vitest run --coverage"
   },

@@ -58,7 +58,7 @@ export class Simulator {
         density: 1,
         initialDistribution: "spherical",
         initialMass: 100,
-        initialVelocity: 100,
+        initialVelocity: 200,
       },
     };
     const gui = new DAT.GUI({

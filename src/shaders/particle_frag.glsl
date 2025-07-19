@@ -1,4 +1,4 @@
-precision lowp float;
+precision mediump float;
 
 in  vec4 vColor;
 out vec4 oColor;

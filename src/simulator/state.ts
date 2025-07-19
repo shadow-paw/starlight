@@ -1,16 +1,11 @@
 import * as THREE from "three";
-import { GPUComputationRenderer, Variable } from "three/addons";
+import { ComputeRenderer } from "@/renderer/compute";
+import ComputePhysicsShader from "@/shaders/physics_comp.glsl";
 import ParticleVertexShader from "@/shaders/particle_vert.glsl";
 import ParticleFragmentShader from "@/shaders/particle_frag.glsl";
-import ComputePositionShader from "@/shaders/position_comp.glsl";
-import ComputeVelocityShader from "@/shaders/velocity_comp.glsl";
 
 interface RenderState {
-  gpu: GPUComputationRenderer;
-  varPosition: Variable;
-  varVelocity: Variable;
-  texPosition: THREE.DataTexture;
-  texVelocity: THREE.DataTexture;
+  physics: ComputeRenderer;
   particleGeometry: THREE.BufferGeometry;
   particleUniforms: { [uniform: string]: THREE.IUniform };
   particles: THREE.Points;
@@ -48,8 +43,7 @@ export class WorldState {
   dispose(): void {
     if (this.renderState) {
       this.renderState.particleGeometry.dispose();
-      this.renderState.texPosition.dispose();
-      this.renderState.gpu.dispose();
+      this.renderState.physics.dispose();
       this.renderState = null;
     }
   }
@@ -76,9 +70,8 @@ export class WorldState {
   restart(options: WorldStateOptions, texTemperature: THREE.Texture): void {
     this.dispose();
     const texSize = this.calculateTextureSize(options.nParticles);
-    const gpu = new GPUComputationRenderer(texSize, texSize, this.renderer);
     // initial condition
-    // texPosition: [x, y, z, 0]
+    // texPosition: [x, y, z, radius]
     // texVelocity: [v.x, v.y, v.z, mass]
     const positions = new Float32Array(texSize * texSize * 4);
     const velocities = new Float32Array(texSize * texSize * 4);
@@ -90,6 +83,10 @@ export class WorldState {
     const particlesPerAxis2 = particlesPerAxis * particlesPerAxis;
     const separation = (options.spaceRadius * 2) / particlesPerAxis;
     for (let i = 0; i < options.nParticles; i++) {
+      const mass = options.initialMass;
+      const radius = Math.cbrt(
+        (mass * 3.0) / (4.0 * Math.PI) / options.density,
+      );
       if (options.initialDistribution == "spherical") {
         // spherical volume, cubic root so more particles the further based on volume ratio
         const x = this.randomVector(
@@ -98,7 +95,7 @@ export class WorldState {
         positions[posIndex++] = x[0];
         positions[posIndex++] = x[1];
         positions[posIndex++] = x[2];
-        positions[posIndex++] = 0;
+        positions[posIndex++] = radius;
       } else if (options.initialDistribution == "cubical") {
         // generate cube volume
         const x = i % particlesPerAxis;
@@ -110,7 +107,7 @@ export class WorldState {
           -options.spaceRadius + (y + (Math.random() * 0.2 - 0.1)) * separation;
         positions[posIndex++] =
           -options.spaceRadius + (z + (Math.random() * 0.2 - 0.1)) * separation;
-        positions[posIndex++] = 0;
+        positions[posIndex++] = radius;
       }
       const v = this.randomVector(
         Math.random() * options.initialVelocity * 0.01,
@@ -118,7 +115,7 @@ export class WorldState {
       velocities[velocityIndex++] = v[0];
       velocities[velocityIndex++] = v[1];
       velocities[velocityIndex++] = v[2];
-      velocities[velocityIndex++] = options.initialMass;
+      velocities[velocityIndex++] = mass;
       uvs[uvIndex++] = (i % texSize) / (texSize - 1);
       uvs[uvIndex++] = Math.floor(i / texSize) / (texSize - 1);
     }
@@ -138,48 +135,12 @@ export class WorldState {
     );
     texPosition.needsUpdate = true;
     texVelocity.needsUpdate = true;
-    const varVelocity = gpu.addVariable(
-      "texVelocity",
-      ComputeVelocityShader,
-      texVelocity,
-    );
-    const varPosition = gpu.addVariable(
-      "texPosition",
-      ComputePositionShader,
-      texPosition,
-    );
-    for (const v of [varPosition, varVelocity]) {
-      v.material.uniforms["nParticles"] = {
-        value: options.nParticles,
-      };
-      v.material.uniforms["spaceTopology"] = {
-        value: this.spaceTopology(options.spaceTopology),
-      };
-      v.material.uniforms["spaceRadius"] = {
-        value: options.spaceRadius,
-      };
-      v.material.uniforms["collisions"] = {
-        value: options.collisions,
-      };
-      v.material.uniforms["density"] = {
-        value: options.density,
-      };
-      v.material.uniforms["gravityLaw"] = {
-        value: this.gravityLaw(options.gravityLaw),
-      };
-      v.material.uniforms["G"] = {
-        value: 0.00066743 * options.gravity,
-      };
-      v.material.uniforms["gravityMondA0"] = {
-        value: 0.0000000012 * options.gravityMondA0,
-      };
-      v.material.uniforms["dt"] = {
-        value: 1.0,
-      };
-    }
-    gpu.setVariableDependencies(varVelocity, [varPosition, varVelocity]);
-    gpu.setVariableDependencies(varPosition, [varPosition, varVelocity]);
-    gpu.init();
+
+    const physics = new ComputeRenderer(ComputePhysicsShader, texSize, 2);
+    this.applyUniforms(physics, options);
+    physics.init(this.renderer, [texPosition, texVelocity]);
+    texPosition.dispose();
+    texVelocity.dispose();
 
     // create render objects
     const particleGeometry = new THREE.BufferGeometry();
@@ -209,15 +170,44 @@ export class WorldState {
     );
     particles.matrixAutoUpdate = false;
     particles.updateMatrix();
+
     this.renderState = {
-      gpu,
-      varPosition,
-      varVelocity,
-      texPosition,
-      texVelocity,
+      physics,
       particleGeometry,
       particleUniforms,
       particles,
+    };
+  }
+  private applyUniforms(
+    physics: ComputeRenderer,
+    options: WorldStateOptions,
+  ): void {
+    physics.uniforms["nParticles"] = {
+      value: options.nParticles,
+    };
+    physics.uniforms["spaceTopology"] = {
+      value: this.spaceTopology(options.spaceTopology),
+    };
+    physics.uniforms["spaceRadius"] = {
+      value: options.spaceRadius,
+    };
+    physics.uniforms["collisions"] = {
+      value: options.collisions,
+    };
+    physics.uniforms["density"] = {
+      value: options.density,
+    };
+    physics.uniforms["gravityLaw"] = {
+      value: this.gravityLaw(options.gravityLaw),
+    };
+    physics.uniforms["G"] = {
+      value: 0.000066743 * options.gravity,
+    };
+    physics.uniforms["gravityMondA0"] = {
+      value: 0.0000000012 * options.gravityMondA0,
+    };
+    physics.uniforms["dt"] = {
+      value: 1.0,
     };
   }
   updateCameraScale(value: number): void {
@@ -227,15 +217,10 @@ export class WorldState {
   }
   tick(): void {
     if (!this.renderState) return;
-    this.renderState.gpu.compute();
-    this.renderState.particleUniforms["texPosition"].value =
-      this.renderState.gpu.getCurrentRenderTarget(
-        this.renderState.varPosition,
-      ).texture;
-    this.renderState.particleUniforms["texVelocity"].value =
-      this.renderState.gpu.getCurrentRenderTarget(
-        this.renderState.varVelocity,
-      ).texture;
+    this.renderState.physics.compute(this.renderer);
+    const textures = this.renderState.physics.textures;
+    this.renderState.particleUniforms["texPosition"].value = textures[0];
+    this.renderState.particleUniforms["texVelocity"].value = textures[1];
   }
   private calculateTextureSize(nParticles: number): number {
     const maxSize = this.renderer.capabilities.maxTextureSize;
